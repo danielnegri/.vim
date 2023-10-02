@@ -58,9 +58,6 @@
 [submodule "bundle/copilot.vim"]
 	path = bundle/copilot.vim
 	url = https://github.com/github/copilot.vim.git
-[submodule "bundle/nvim-lspconfig"]
-	path = bundle/nvim-lspconfig
-	url = https://github.com/neovim/nvim-lspconfig.git
 [submodule "bundle/plenary.nvim"]
 	path = bundle/plenary.nvim
 	url = https://github.com/nvim-lua/plenary.nvim.git

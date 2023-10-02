@@ -171,8 +171,18 @@ else
   colorscheme solarized
 endif
 
-set guifont=Inconsolata:h15
+"set guifont=Inconsolata:h15
+set guifont=Inconsolata\ for\ Powerline:h15
+let g:Powerline_symbols = 'fancy'
 set guioptions-=L
+
+if has("gui_running")
+    let s:uname = system("uname")
+    if s:uname == "Darwin\n"
+        set guifont=Source\ Code\ Pro\ for\ Powerline:h15
+        colorscheme PaperColor              " set color scheme
+    endif
+endif
 
 " This comes first, because we have mappings that depend on leader
 " With a map leader it's possible to do extra key combinations
@@ -619,91 +629,6 @@ require("bufferline").setup{
 EOF
 endif
 
-" ================== vim-fugitive ====================
-" Suggest using pinentry-touchid since it is the least shit option:
-" https://github.com/jorgelbg/pinentry-touchid
-" This is used when unlocking a gpg key for signing or ssh key for commits.
-if !executable('pinentry-touchid')
-  echo "You might want to install pinentry-touchid: https://github.com/jorgelbg/pinentry-touchid"
-endif
-let g:which_key_map.g = { 'name' : '+git' }
-nnoremap <leader>ga :Git add %:p<CR><CR>
-let g:which_key_map.g.a = 'git add current file'
-nnoremap <leader>gs :Git<CR>
-let g:which_key_map.g.s = 'git status'
-nnoremap <leader>gp :Git push<CR><CR>
-let g:which_key_map.g.p = 'git push'
-nnoremap <leader>gb :Git blame<CR>
-let g:which_key_map.g.b = 'git blame'
-nnoremap <leader>gc :Git commit -sa<CR><CR>
-let g:which_key_map.g.c = 'git commit'
-nnoremap <leader>go :GBrowse<CR><CR>
-let g:which_key_map.g.o = 'open in GitHub'
-
-" ==================== gitsigns.nvim ====================
-if has('nvim')
-lua << EOF
-require("gitsigns").setup{
-  signs = {
-    add          = {hl = 'GitSignsAdd'   , text = '+', numhl='GitSignsAddNr'   , linehl='GitSignsAddLn'},
-    change       = {hl = 'GitSignsChange', text = '~', numhl='GitSignsChangeNr', linehl='GitSignsChangeLn'},
-    delete       = {hl = 'GitSignsDelete', text = '_', numhl='GitSignsDeleteNr', linehl='GitSignsDeleteLn'},
-    topdelete    = {hl = 'GitSignsDelete', text = '_¯', numhl='GitSignsDeleteNr', linehl='GitSignsDeleteLn'},
-    changedelete = {hl = 'GitSignsChange', text = '~_', numhl='GitSignsChangeNr', linehl='GitSignsChangeLn'},
-  },
-  signcolumn = true,  -- Toggle with `:Gitsigns toggle_signs`
-  numhl      = false, -- Toggle with `:Gitsigns toggle_numhl`
-  linehl     = false, -- Toggle with `:Gitsigns toggle_linehl`
-  word_diff  = false, -- Toggle with `:Gitsigns toggle_word_diff`
-  watch_gitdir = {
-    interval = 1000,
-    follow_files = true
-  },
-  attach_to_untracked = true,
-  current_line_blame = false, -- Toggle with `:Gitsigns toggle_current_line_blame`
-  current_line_blame_opts = {
-    virt_text = true,
-    virt_text_pos = 'eol', -- 'eol' | 'overlay' | 'right_align'
-    delay = 1000,
-    ignore_whitespace = false,
-  },
-  current_line_blame_formatter = '<author>, <author_time:%Y-%m-%d> - <summary>',
-  sign_priority = 6,
-  update_debounce = 100,
-  status_formatter = nil, -- Use default
-  max_file_length = 40000,
-  preview_config = {
-    -- Options passed to nvim_open_win
-    border = 'single',
-    style = 'minimal',
-    relative = 'cursor',
-    row = 0,
-    col = 1
-  },
-  yadm = {
-    enable = false
-  },
-  on_attach = function(bufnr)
-      local gs = package.loaded.gitsigns
-
-      local function map(mode, l, r, opts)
-        opts = opts or {}
-        opts.buffer = bufnr
-        vim.keymap.set(mode, l, r, opts)
-      end
-
-      map('n', ']c', "&diff ? ']c' : '<cmd>Gitsigns next_hunk<CR>'", {expr=true})
-      map('n', '[c', "&diff ? '[c' : '<cmd>Gitsigns prev_hunk<CR>'", {expr=true})
-
-      map('n', '<leader>gb', function() gs.blame_line{full=true} end)
-      map('n', '<leader>tb', gs.toggle_current_line_blame)
-
-      map('n', '<leader>gd', gs.diffthis)
-  end
-}
-EOF
-endif
-
 " ==================== vim-go ====================
 let g:go_fmt_fail_silently = 0
 let g:go_fmt_command = "goimports"
@@ -816,207 +741,6 @@ let g:hcl_fmt_autosave = 1
 " Ignore terraform since we have the terraform plugin
 let g:tf_fmt_autosave = 0
 let g:nomad_fmt_autosave = 1
-
-" =================== copilot.vim ========================
-
-hi def CopilotSuggestion guifg=#808080 ctermfg=244
-
-" =================== nvim-lspconfig ========================
-
-if has('nvim-0.5')
-
-" =================== clangd ========================
-if executable('clangd')
-lua << EOF
-require'lspconfig'.clangd.setup{}
-EOF
-else
-  echo "You might want to install clangd: https://clangd.llvm.org/installation.html"
-endif
-
-" =================== gopls ========================
-if executable('gopls')
-lua << EOF
-require'lspconfig'.gopls.setup{}
-EOF
-else
-  echo "You might want to install gopls: https://github.com/golang/tools/tree/master/gopls"
-endif
-
-" =================== rust-analyzer ========================
-if executable('rust-analyzer')
-lua << EOF
-local nvim_lsp = require'lspconfig'
-
-nvim_lsp.rust_analyzer.setup({
-  -- on_attach is a callback called when the language server attachs to the buffer
-  -- on_attach = on_attach,
-  settings = {
-    -- config from: https://github.com/rust-analyzer/rust-analyzer/blob/master/docs/user/generated_config.adoc
-    ["rust-analyzer"] = {
-      -- enable clippy diagnostics on save
-      checkOnSave = {
-        command = "clippy"
-      },
-    }
-  }
-})
-EOF
-else
-  echo "You might want to install rust-analyzer: https://rust-analyzer.github.io/manual.html#rust-analyzer-language-server-binary"
-endif
-
-endif
-
-" =================== tsserver ========================
-if executable('tsserver')
-lua << EOF
-require'lspconfig'.tsserver.setup{}
-EOF
-else
-  echo "You might want to install tsserver: yarn global add typescript typescript-language-server"
-endif
-
-" =================== nvim-cmp ========================
-
-if has('nvim-0.5')
-
-lua << EOF
--- Add additional capabilities supported by nvim-cmp
-local nvim_lsp = require'lspconfig'
-local cmp = require'cmp'
-
-cmp.setup ({
-  snippet = {
-    -- Enable LSP snippets
-    -- REQUIRED - you must specify a snippet engine
-    expand = function(args)
-      vim.fn["vsnip#anonymous"](args.body)
-    end,
-  },
-  mapping = {
-    ['<C-Space>'] = cmp.mapping.complete(),
-    ['<C-e>'] = cmp.mapping.close(),
-    ['<Down>'] = cmp.mapping(cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Select }), {'i'}),
-    ['<Up>'] = cmp.mapping(cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Select }), {'i'}),
-    ['<CR>'] = cmp.mapping.confirm({
-      behavior = cmp.ConfirmBehavior.Replace,
-      select = true,
-    }),
-  },
-  -- Installed sources
-  sources = {
-    { name = 'nvim_lsp' },
-    { name = 'vsnip' },
-    { name = 'path' },
-    { name = 'buffer' },
-    { name = 'cmdline' },
-    { name = 'spell' },
-    { name = 'git' },
-  },
-})
-
-
-vim.opt.spelllang = { 'en_us' }
-
-require("cmp_git").setup({
-    -- defaults
-    filetypes = { "gitcommit" },
-    remotes = { "upstream", "origin" }, -- in order of most to least prioritized
-})
-
--- Setup lspconfig.
-local capabilities = vim.lsp.protocol.make_client_capabilities()
-capabilities = require('cmp_nvim_lsp').update_capabilities(capabilities)
--- Enable some language servers with the additional completion capabilities offered by nvim-cmp
-local servers = { 'clangd', 'rust_analyzer', 'tsserver' }
-for _, lsp in ipairs(servers) do
-  nvim_lsp[lsp].setup {
-    -- on_attach = my_custom_on_attach,
-    capabilities = capabilities,
-  }
-end
-
-EOF
-
-endif
-
-" =================== lspsaga.nvim =========================
-if has('nvim')
-" lsp provider to find the cursor word definition and reference
-nnoremap <silent> gh :Lspsaga lsp_finder<CR>
-
-" preview definition
-nnoremap <silent> gd :Lspsaga preview_definition<CR>
-
-" rename
-nnoremap <silent> gr :Lspsaga rename<CR>
-
-" show signature help
-nnoremap <silent> gs :Lspsaga signature_help<CR>
-
-" show hover doc
-nnoremap <silent>K :Lspsaga hover_doc<CR>
-" scroll down hover doc or scroll in definition preview
-" nnoremap <silent> <C-f> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(1)<CR>
-" scroll up hover doc
-" nnoremap <silent> <C-b> <cmd>lua require('lspsaga.action').smart_scroll_with_saga(-1)<CR>
-
-" code action
-nnoremap <silent><leader>ca :Lspsaga code_action<CR>
-vnoremap <silent><leader>ca :Lspsaga range_code_action<CR>
-
-" float terminal also you can pass the cli command in open_float_terminal function
-nnoremap <silent> <C-t> :Lspsaga open_floaterm<CR>
-tnoremap <silent> <C-t> <C-\><C-n>:Lspsaga close_floaterm<CR>
-
-" diagnostics
-nnoremap <silent><leader>cd :Lspsaga show_line_diagnostics<CR>
-
-" TODO fix why this plugin errors when opening a gitcommit file.
-lua << EOF
-require'lspsaga'.init_lsp_saga{
-  use_saga_diagnostic_sign = true,
-  error_sign = '',
-  warn_sign = '',
-  hint_sign = '',
-  infor_sign = '',
-  infor_sign = '',
-  diagnostic_header_icon = '   ',
-  code_action_icon = ' ',
-  code_action_prompt = {
-    enable = true,
-    sign = true,
-    sign_priority = 20,
-    virtual_text = true,
-    },
-  finder_definition_icon = '  ',
-  finder_reference_icon = '  ',
-  max_preview_lines = 10, -- preview lines of lsp_finder and definition preview
-  finder_action_keys = {
-    open = 'o',
-    vsplit = 's',
-    split = 'i',
-    quit = 'q',
-    scroll_down = '<C-f>',
-    scroll_up = '<C-b>',
-    },
-  code_action_keys = {
-    quit = 'q',
-    exec = '<CR>'
-    },
-  rename_action_keys = {
-    quit = '<C-c>',
-    exec = '<CR>',
-    },
-  definition_preview_icon = '  ',
-  -- "single" "double" "round" "plus"
-  border_style = "single",
-  rename_prompt_prefix = '➤',
-}
-EOF
-endif
-
 
 " =================== indent-blankline.nvim ========================
 if has('nvim')
